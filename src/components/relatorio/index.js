@@ -7,6 +7,80 @@ import Relatorio from './relatorio'
 import { dateToString, datetimeToString } from '../utils/dateHelpers'
 
 class RelatorioIndex extends Component {
+  debounceFilterForInput = _.debounce(
+    ({ data, isFilterInput, reRenderPieGraph }) => {
+      let filteredList = []
+
+      let inputsWhithValue = this.state.inputRefs.filter(input => {
+        if (input.columnType == 'date' || input.columnType == 'datetime') {
+          if (input.value !== '') {
+            return input
+          }
+        } else if (input.isSelectInput) {
+          if (input.value !== '' && input.value !== undefined) {
+            return input
+          }
+        } else if (input.el.value !== '') {
+          return input
+        }
+      })
+
+      if (inputsWhithValue.length === 0 && isFilterInput) {
+        this.setFilteredData([], false)
+
+        if (reRenderPieGraph) {
+          reRenderPieGraph()
+        }
+        return
+      }
+
+      let lista = JSON.parse(JSON.stringify(data))
+
+      lista.map(obj => {
+        let passedForFilters = 0
+
+        inputsWhithValue.map(input => {
+          console.log('input.columnType', input.columnType)
+          let nome = input.name
+          let inputValue = input.el.value || input.el.props.value
+
+          if (input.columnType == 'date') {
+            if (input.value == obj[nome]) {
+              passedForFilters++
+            }
+          } else if (input.columnType == 'datetime') {
+            let stringDatePoint = datetimeToString(obj[nome])
+            let formatedDate = moment(stringDatePoint).format('DD/MM/YYYY')
+
+            if (input.value == formatedDate) {
+              passedForFilters++
+            }
+          } else if (input.columnType == 'numeric') {
+
+            if ( obj[nome]?.toString().includes(inputValue)) {
+              passedForFilters++
+            }
+          } else if (
+            obj[nome] &&
+            obj[nome]
+              .toLowerCase()
+              .trim()
+              .includes(inputValue.toLowerCase().trim())
+          ) {
+            passedForFilters++
+          }
+        })
+
+        if (passedForFilters == inputsWhithValue.length) {
+          filteredList.push(obj)
+        }
+      })
+
+      this.setFilteredData(filteredList, true, reRenderPieGraph)
+    },
+    600
+  )
+
   constructor(props) {
     super(props)
     this.state = {
@@ -107,74 +181,6 @@ class RelatorioIndex extends Component {
     }
   }
 
-  debounceFilterForInput = _.debounce(
-    ({ data, isFilterInput, reRenderPieGraph }) => {
-      let filteredList = []
-
-      let inputsWhithValue = this.state.inputRefs.filter(input => {
-        if (input.columnType == 'date' || input.columnType == 'datetime') {
-          if (input.value !== '') {
-            return input
-          }
-        } else if (input.isSelectInput) {
-          if (input.value !== '' && input.value !== undefined) {
-            return input
-          }
-        } else if (input.el.value !== '') {
-          return input
-        }
-      })
-
-      if (inputsWhithValue.length === 0 && isFilterInput) {
-        this.setFilteredData([], false)
-
-        if (reRenderPieGraph) {
-          reRenderPieGraph()
-        }
-        return
-      }
-
-      let lista = JSON.parse(JSON.stringify(data))
-
-      lista.map(obj => {
-        let passedForFilters = 0
-
-        inputsWhithValue.map(input => {
-          let nome = input.name
-          let inputValue = input.el.value || input.el.props.value
-
-          if (input.columnType == 'date') {
-            if (input.value == obj[nome]) {
-              passedForFilters++
-            }
-          } else if (input.columnType == 'datetime') {
-            let stringDatePoint = datetimeToString(obj[nome])
-            let formatedDate = moment(stringDatePoint).format('DD/MM/YYYY')
-
-            if (input.value == formatedDate) {
-              passedForFilters++
-            }
-          } else if (
-            obj[nome] &&
-            obj[nome]
-              .toLowerCase()
-              .trim()
-              .includes(inputValue.toLowerCase().trim())
-          ) {
-            passedForFilters++
-          }
-        })
-
-        if (passedForFilters == inputsWhithValue.length) {
-          filteredList.push(obj)
-        }
-      })
-
-      this.setFilteredData(filteredList, true, reRenderPieGraph)
-    },
-    600
-  )
-
   filterData = ({
     data = this.state.originalData,
     isFilterInput,
@@ -230,6 +236,10 @@ class RelatorioIndex extends Component {
           let formatedDate = moment(stringDatePoint).format('DD/MM/YYYY')
 
           if (input.value == formatedDate) {
+            passedForFilters++
+          }
+        } else if (input.columnType == 'numeric') {
+          if (input.value == obj[nome]) {
             passedForFilters++
           }
         } else if (

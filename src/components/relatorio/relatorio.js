@@ -33,6 +33,7 @@ const styles = theme => ({
     textAlign: 'center',
     flex: 1,
     wordBreak: 'break-all',
+    borderBottom: '1px solid red',
   },
   noClick: {
     cursor: 'initial',
@@ -60,6 +61,15 @@ const styles = theme => ({
       padding: '10px 0px',
       fontSize: 14,
     },
+  },
+  cell: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    width: '100%',
+    height: '100%',
+    fontSize: 11,
   },
 })
 
@@ -159,6 +169,7 @@ class Relatorio extends Component {
           columnIndex={columnIndex}
           KEY={KEY}
           customColumns={customColumns}
+          columnType={columnType}
         />
       )
     }
@@ -171,7 +182,7 @@ class Relatorio extends Component {
           this.props.inputRefs[columnIndex] && inputRefs[columnIndex].el.value
         }
         inputRef={el =>
-          el && (inputRefs[columnIndex] = { name: KEY, el, label })
+          el && (inputRefs[columnIndex] = { name: KEY, el, label, columnType })
         }
         onChange={e =>
           this.props.filterData({ isFilterInput: true, columnType })
@@ -190,7 +201,7 @@ class Relatorio extends Component {
   }
 
   _cellRenderer = ({ columnIndex, key, parent, rowIndex, style }) => {
-    const { customColumns, data, colunasArray } = this.props
+    const { customColumns, data, colunasArray, classes } = this.props
 
     let KEY = colunasArray[columnIndex]
     let { label } = customColumns[columnIndex]
@@ -206,26 +217,19 @@ class Relatorio extends Component {
         parent={parent}
         rowIndex={rowIndex}
       >
-        <div style={style}>
+        <div
+          style={{ ...style, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
+        >
           {isCustomRender ? (
-            isCustomRender({
-              column: customColumns[columnIndex],
-              row: data[rowIndex],
-              KEY,
-            })
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                width: '90%',
-                fontSize: 11,
-              }}
-            >
-              {data[rowIndex][KEY]}
+            <div className={classes.cell}>
+              {isCustomRender({
+                column: customColumns[columnIndex],
+                row: data[rowIndex],
+                KEY,
+              })}
             </div>
+          ) : (
+            <div className={classes.cell}>{data[rowIndex][KEY]}</div>
           )}
         </div>
       </CellMeasurer>

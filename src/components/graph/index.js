@@ -13,6 +13,7 @@ import IconButton from '@material-ui/core/IconButton'
 import ClearIcon from '@material-ui/icons/Clear'
 import PieChart from './PieChart'
 import CleanIcon from '../utils/CleanIcon'
+import isNumeric from '../utils/isNumeric'
 
 const CCOLUMN_WIDTH = 220
 
@@ -98,6 +99,7 @@ class Graph extends Component {
         },
         series: [
           {
+            turboThreshold: 10000,
             colorByPoint: true,
             data: [],
           },
@@ -194,6 +196,7 @@ class Graph extends Component {
     const { data } = this.props
 
     let KEY = column.dataKey
+    let COLUMN_TYPE = column.type;
 
     let filteredArray = []
 
@@ -202,9 +205,17 @@ class Graph extends Component {
         obj[KEY] = 'Indefinido'
       }
 
-      let hasInFilteredArray = filteredArray.find(e =>
-        e.name.trim().toLowerCase().includes(obj[KEY].toLowerCase().trim())
-      )
+      let hasInFilteredArray = null;
+
+      if( COLUMN_TYPE === 'numeric'){
+        hasInFilteredArray = filteredArray.find(e =>
+          e.name.toString().includes(obj[KEY])
+        )
+      }else{
+        hasInFilteredArray = filteredArray.find(e =>
+          e.name.trim().toLowerCase().includes(obj[KEY].toLowerCase().trim())
+        )
+      }
 
       if (hasInFilteredArray) {
         hasInFilteredArray.y++
